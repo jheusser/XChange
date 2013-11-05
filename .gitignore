@@ -4,6 +4,7 @@
 .idea/
 *.iml
 *.iws
+**.class
 .DS_Store
 log/
 target/
