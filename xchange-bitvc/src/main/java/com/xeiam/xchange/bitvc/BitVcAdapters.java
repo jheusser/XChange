@@ -56,7 +56,7 @@ public final class BitVcAdapters {
   public static OrderBook adaptOrderBook(BitVcDepth BitVcDepth, CurrencyPair currencyPair) {
 
     List<LimitOrder> asks = adaptOrderBook(BitVcDepth.getAsks(), ASK, currencyPair);
-    Collections.reverse(asks);
+//    Collections.reverse(asks);
 
     List<LimitOrder> bids = adaptOrderBook(BitVcDepth.getBids(), BID, currencyPair);
 
