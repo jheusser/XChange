@@ -201,7 +201,10 @@ public final class BTCChinaAdapters {
     Collections.reverse(asks);
     List<LimitOrder> bids = BTCChinaAdapters.adaptOrders(btcChinaDepth.getBidsArray(), currencyPair, OrderType.BID);
 
-    return new OrderBook(BTCChinaAdapters.adaptDate(btcChinaDepth.getDate()), asks, bids);
+//    return new OrderBook(BTCChinaAdapters.adaptDate(btcChinaDepth.getDate()), asks, bids);
+    
+    // timestamp is rounded to seconds, so better remove it and let other component set date
+    return new OrderBook(null, asks, bids);
   }
 
   public static OrderBook adaptOrderBook(BTCChinaMarketDepth marketDepth, CurrencyPair currencyPair) {
