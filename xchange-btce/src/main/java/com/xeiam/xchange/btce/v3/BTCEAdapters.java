@@ -1,15 +1,15 @@
 package com.xeiam.xchange.btce.v3;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.xeiam.xchange.btce.v3.dto.marketdata.BTCEMarketMetadata;
+import com.xeiam.xchange.btce.v3.dto.marketdata.BTCETradeServiceHelper;
 import com.xeiam.xchange.btce.v3.dto.marketdata.BTCEPairInfo;
-import com.xeiam.xchange.dto.marketdata.MarketMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,7 +142,7 @@ public final class BTCEAdapters {
     return new Ticker.Builder().currencyPair(currencyPair).last(last).bid(bid).ask(ask).high(high).low(low).volume(volume).timestamp(timestamp).build();
   }
 
-  public static AccountInfo adaptAccountInfo(BTCEAccountInfo btceAccountInfo) {
+  public static AccountInfo adaptAccountInfo(BTCEAccountInfo btceAccountInfo, BigDecimal tradingFee) {
 
     List<Wallet> wallets = new ArrayList<Wallet>();
     Map<String, BigDecimal> funds = btceAccountInfo.getFunds();
@@ -152,7 +152,7 @@ public final class BTCEAdapters {
 
       wallets.add(new Wallet(currency, funds.get(lcCurrency)));
     }
-    return new AccountInfo(null, wallets);
+    return new AccountInfo(null, tradingFee, wallets);
   }
 
   public static OpenOrders adaptOrders(Map<Long, BTCEOrder> btceOrderMap) {
@@ -208,13 +208,13 @@ public final class BTCEAdapters {
     return pairs;
   }
 
-  public static MarketMetadata createMarketMetadata(BTCEPairInfo pairInfo, int amountScale) {
+  public static BTCETradeServiceHelper createMarketMetadata(BTCEPairInfo pairInfo, int amountScale) {
 
-    BigDecimal minAmount = pairInfo.getMinAmount().setScale(amountScale);
+    BigDecimal minAmount = pairInfo.getMinAmount().setScale(amountScale, RoundingMode.UNNECESSARY);
 
     // convert percent to factor
     BigDecimal orderFeeFactor = pairInfo.getFee().movePointLeft(2);
 
-    return new BTCEMarketMetadata(minAmount, pairInfo.getDecimals(), orderFeeFactor, pairInfo.getMinPrice(), pairInfo.getMaxPrice());
+    return new BTCETradeServiceHelper(minAmount, pairInfo.getDecimals(), pairInfo.getMinPrice(), pairInfo.getMaxPrice());
   }
 }

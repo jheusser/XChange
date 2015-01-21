@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
@@ -11,10 +12,10 @@ import java.util.Properties;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.apache.commons.io.IOUtils.copy;
 
-public class ConfigurationManager {
-  final public static ConfigurationManager CFG_MGR = new ConfigurationManager();
+public class TradeServiceHelperConfigurer {
+  final public static TradeServiceHelperConfigurer CFG = new TradeServiceHelperConfigurer();
 
-  final private static Logger log = LoggerFactory.getLogger(ConfigurationManager.class);
+  final private static Logger log = LoggerFactory.getLogger(TradeServiceHelperConfigurer.class);
 
   final private static String CFG_FILE_NAME = "xchange.properties";
 
@@ -68,6 +69,7 @@ public class ConfigurationManager {
    * @return false if update was not configured
    */
   public boolean update() throws IOException {
+
     override = getFile(KEY_OVERRIDE_PATH, override, true);
 
     if (override != null) {
@@ -94,6 +96,7 @@ public class ConfigurationManager {
    * @return the current configuration properties. Never a null.
    */
   public Properties getProperties() {
+
     if (properties == null) {
       try {
         update();
@@ -105,6 +108,7 @@ public class ConfigurationManager {
   }
 
   private void updateRemote() throws IOException {
+
     InputStream input = null;
     OutputStream output = null;
     try {
@@ -118,6 +122,7 @@ public class ConfigurationManager {
   }
 
   private static URL getRemote(String propertyKey, URL remote) {
+
     String userRemote = System.getProperty(propertyKey);
     if (userRemote != null) {
       try {
@@ -131,6 +136,7 @@ public class ConfigurationManager {
   }
 
   private static File getFile(String propertyKey, File defaultFile, boolean requireReadable) {
+
     String propertyValue = System.getProperty(propertyKey);
     if (propertyValue == null) {
       return defaultFile;
@@ -144,6 +150,7 @@ public class ConfigurationManager {
   }
 
   private void initInternal() throws IOException {
+
     InputStream input = null;
     try {
       input = getClass().getClassLoader().getResourceAsStream(CFG_FILE_NAME);
@@ -156,6 +163,7 @@ public class ConfigurationManager {
   }
 
   private void init(File file) throws IOException {
+
     InputStream input = null;
     try {
       input = new FileInputStream(file);
@@ -166,6 +174,7 @@ public class ConfigurationManager {
   }
 
   private void init(InputStream input) throws IOException {
+
     Properties result = new Properties();
     result.load(input);
     properties = result;
@@ -176,15 +185,30 @@ public class ConfigurationManager {
     return Integer.parseInt(getProperties().getProperty(key));
   }
 
+  public boolean getBoolProperty(String key) {
+
+    String str = getProperties().getProperty(key);
+    return str != null && Boolean.parseBoolean(str);
+  }
+
+  public BigDecimal getBigDecimalProperty(String key) {
+
+    String str = getProperties().getProperty(key);
+    return str == null ? null : new BigDecimal(str);
+  }
+
   public void setOverride(File override) {
+
     this.override = override;
   }
 
   public void setLocal(File local) {
+
     this.local = local;
   }
 
   public void setRemote(URL remote) {
+
     this.remote = remote;
   }
 }

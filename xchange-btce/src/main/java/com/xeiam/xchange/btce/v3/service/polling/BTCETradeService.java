@@ -2,6 +2,7 @@ package com.xeiam.xchange.btce.v3.service.polling;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.xeiam.xchange.ExchangeException;
@@ -9,6 +10,8 @@ import com.xeiam.xchange.ExchangeSpecification;
 import com.xeiam.xchange.NotAvailableFromExchangeException;
 import com.xeiam.xchange.btce.v3.BTCEAdapters;
 import com.xeiam.xchange.btce.v3.BTCEAuthenticated;
+import com.xeiam.xchange.btce.v3.dto.marketdata.BTCETradeServiceHelper;
+import com.xeiam.xchange.btce.v3.dto.marketdata.BTCEPairInfo;
 import com.xeiam.xchange.btce.v3.dto.trade.BTCECancelOrderResult;
 import com.xeiam.xchange.btce.v3.dto.trade.BTCEOrder;
 import com.xeiam.xchange.btce.v3.dto.trade.BTCEPlaceOrderResult;
@@ -23,6 +26,8 @@ import com.xeiam.xchange.service.polling.PollingTradeService;
 import com.xeiam.xchange.service.polling.trade.*;
 import com.xeiam.xchange.utils.DateUtils;
 import si.mazi.rescu.SynchronizedValueFactory;
+
+import static com.xeiam.xchange.utils.TradeServiceHelperConfigurer.CFG;
 
 /**
  * @author Matija Mazi
@@ -182,6 +187,28 @@ public class BTCETradeService extends BTCETradeServiceRaw implements PollingTrad
   public com.xeiam.xchange.service.polling.trade.TradeHistoryParams createTradeHistoryParams() {
 
     return new BTCETradeHistoryParams();
+  }
+
+  /**
+   * Fetch the {@link com.xeiam.xchange.dto.marketdata.TradeServiceHelper} from the exchange.
+   *
+   * @return Map of currency pairs to their corresponding metadata.
+   * @see com.xeiam.xchange.dto.marketdata.TradeServiceHelper
+   */
+  @Override
+  public Map<CurrencyPair, BTCETradeServiceHelper> getTradeServiceHelperMap() throws IOException {
+
+    Map<CurrencyPair, BTCETradeServiceHelper>result = new HashMap<CurrencyPair, BTCETradeServiceHelper>();
+    int amountScale = CFG.getIntProperty(KEY_ORDER_SIZE_SCALE_DEFAULT);
+
+    Map<String, BTCEPairInfo> pairInfos = getExchangeInfo().getPairs();
+    for (Map.Entry<String, BTCEPairInfo> e : pairInfos.entrySet()) {
+      CurrencyPair pair = BTCEAdapters.adaptCurrencyPair(e.getKey());
+      BTCETradeServiceHelper meta = BTCEAdapters.createMarketMetadata(e.getValue(), amountScale);
+
+      result.put(pair, meta);
+    }
+    return result;
   }
 
   public static class BTCETradeHistoryParams extends DefaultTradeHistoryParamPaging implements TradeHistoryParamsIdSpan, TradeHistoryParamsTimeSpan, TradeHistoryParamCurrencyPair {

@@ -4,11 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParamCurrencyPair;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParamPaging;
-import com.xeiam.xchange.service.polling.trade.DefaultTradeHistoryParamPaging;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,15 +15,20 @@ import com.xeiam.xchange.NotAvailableFromExchangeException;
 import com.xeiam.xchange.NotYetImplementedForExchangeException;
 import com.xeiam.xchange.currency.CurrencyPair;
 import com.xeiam.xchange.dto.Order.OrderType;
+import com.xeiam.xchange.dto.marketdata.TradeServiceHelper;
 import com.xeiam.xchange.dto.trade.LimitOrder;
 import com.xeiam.xchange.dto.trade.MarketOrder;
 import com.xeiam.xchange.dto.trade.OpenOrders;
 import com.xeiam.xchange.dto.trade.UserTrades;
 import com.xeiam.xchange.okcoin.OkCoinAdapters;
-import com.xeiam.xchange.okcoin.OkCoinException;
+import com.xeiam.xchange.okcoin.OkCoinUtils;
 import com.xeiam.xchange.okcoin.dto.trade.OkCoinOrderResult;
 import com.xeiam.xchange.okcoin.dto.trade.OkCoinTradeResult;
 import com.xeiam.xchange.service.polling.PollingTradeService;
+import com.xeiam.xchange.service.polling.trade.DefaultTradeHistoryParamPaging;
+import com.xeiam.xchange.service.polling.trade.TradeHistoryParamCurrencyPair;
+import com.xeiam.xchange.service.polling.trade.TradeHistoryParamPaging;
+import com.xeiam.xchange.service.polling.trade.TradeHistoryParams;
 
 public class OkCoinTradeService extends OkCoinTradeServiceRaw implements PollingTradeService {
   private static final OpenOrders noOpenOrders = new OpenOrders(Collections.<LimitOrder>emptyList());
@@ -107,8 +109,8 @@ public class OkCoinTradeService extends OkCoinTradeServiceRaw implements Polling
           ret = true;
         }
         break;
-      } catch (OkCoinException e) {
-        if (e.getErrorCode() == 10009) {
+      } catch (ExchangeException e) { 
+        if (e.getMessage().equals(OkCoinUtils.getErrorMessage(1009))) {
           // order not found.
           continue;
         }
@@ -161,6 +163,16 @@ public class OkCoinTradeService extends OkCoinTradeServiceRaw implements Polling
   public com.xeiam.xchange.service.polling.trade.TradeHistoryParams createTradeHistoryParams() {
 
     return new OkCoinTradeHistoryParams();
+  }
+
+  /**
+   * Fetch the {@link com.xeiam.xchange.dto.marketdata.TradeServiceHelper} from the exchange.
+   *
+   * @return Map of currency pairs to their corresponding metadata.
+   * @see com.xeiam.xchange.dto.marketdata.TradeServiceHelper
+   */
+  @Override public Map<CurrencyPair, ? extends TradeServiceHelper> getTradeServiceHelperMap() throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+    throw new NotAvailableFromExchangeException();
   }
 
   public static class OkCoinTradeHistoryParams extends DefaultTradeHistoryParamPaging implements TradeHistoryParamCurrencyPair {
