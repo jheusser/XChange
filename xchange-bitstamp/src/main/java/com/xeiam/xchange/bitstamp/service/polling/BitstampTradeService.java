@@ -6,26 +6,23 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import com.xeiam.xchange.ExchangeException;
-import com.xeiam.xchange.ExchangeSpecification;
-import com.xeiam.xchange.NotAvailableFromExchangeException;
-import com.xeiam.xchange.NotYetImplementedForExchangeException;
+import com.xeiam.xchange.Exchange;
 import com.xeiam.xchange.bitstamp.BitstampAdapters;
 import com.xeiam.xchange.bitstamp.dto.BitstampException;
 import com.xeiam.xchange.bitstamp.dto.trade.BitstampOrder;
 import com.xeiam.xchange.currency.CurrencyPair;
 import com.xeiam.xchange.dto.Order.OrderType;
-import com.xeiam.xchange.dto.marketdata.TradeServiceHelper;
 import com.xeiam.xchange.dto.trade.LimitOrder;
 import com.xeiam.xchange.dto.trade.MarketOrder;
 import com.xeiam.xchange.dto.trade.OpenOrders;
 import com.xeiam.xchange.dto.trade.UserTrades;
-import com.xeiam.xchange.service.polling.PollingTradeService;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParamPaging;
-import com.xeiam.xchange.service.polling.trade.DefaultTradeHistoryParamPaging;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParams;
+import com.xeiam.xchange.exceptions.ExchangeException;
+import com.xeiam.xchange.exceptions.NotAvailableFromExchangeException;
+import com.xeiam.xchange.service.polling.trade.PollingTradeService;
+import com.xeiam.xchange.service.polling.trade.params.DefaultTradeHistoryParamPaging;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParamPaging;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParams;
 
 /**
  * @author Matija Mazi
@@ -34,12 +31,12 @@ public class BitstampTradeService extends BitstampTradeServiceRaw implements Pol
 
   /**
    * Constructor
-   * 
-   * @param exchangeSpecification The {@link ExchangeSpecification}
+   *
+   * @param exchange
    */
-  public BitstampTradeService(ExchangeSpecification exchangeSpecification) {
+  public BitstampTradeService(Exchange exchange) {
 
-    super(exchangeSpecification);
+    super(exchange);
   }
 
   @Override
@@ -69,8 +66,7 @@ public class BitstampTradeService extends BitstampTradeServiceRaw implements Pol
     BitstampOrder bitstampOrder;
     if (limitOrder.getType() == BID) {
       bitstampOrder = buyBitStampOrder(limitOrder.getTradableAmount(), limitOrder.getLimitPrice());
-    }
-    else {
+    } else {
       bitstampOrder = sellBitstampOrder(limitOrder.getTradableAmount(), limitOrder.getLimitPrice());
     }
     if (bitstampOrder.getErrorMessage() != null) {
@@ -94,8 +90,7 @@ public class BitstampTradeService extends BitstampTradeServiceRaw implements Pol
       Object arg0 = args[0];
       if (!(arg0 instanceof Number)) {
         throw new ExchangeException("Argument must be a Number!");
-      }
-      else {
+      } else {
         numberOfTransactions = ((Number) args[0]).longValue();
       }
     }
@@ -104,29 +99,18 @@ public class BitstampTradeService extends BitstampTradeServiceRaw implements Pol
   }
 
   /**
-   * Required parameter types:
-   * {@link TradeHistoryParamPaging#getPageLength()}
+   * Required parameter types: {@link TradeHistoryParamPaging#getPageLength()}
    */
   @Override
   public UserTrades getTradeHistory(TradeHistoryParams params) throws IOException {
 
-    return BitstampAdapters.adaptTradeHistory(getBitstampUserTransactions(Long.valueOf(((TradeHistoryParamPaging)params).getPageLength())));
+    return BitstampAdapters.adaptTradeHistory(getBitstampUserTransactions(Long.valueOf(((TradeHistoryParamPaging) params).getPageLength())));
   }
 
   @Override
   public TradeHistoryParams createTradeHistoryParams() {
 
     return new DefaultTradeHistoryParamPaging(1000);
-  }
-
-  /**
-   * Fetch the {@link com.xeiam.xchange.dto.marketdata.TradeServiceHelper} from the exchange.
-   *
-   * @return Map of currency pairs to their corresponding metadata.
-   * @see com.xeiam.xchange.dto.marketdata.TradeServiceHelper
-   */
-  @Override public Map<CurrencyPair, ? extends TradeServiceHelper> getTradeServiceHelperMap() throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-    throw new NotAvailableFromExchangeException();
   }
 
 }

@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.xeiam.xchange</groupId>
 	<artifactId>xchange-parent</artifactId>
-	<version>2.2.0-SNAPSHOT</version>
+	<version>3.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>XChange Parent</name>
@@ -77,6 +76,7 @@
 		<module>xchange-bitfinex</module>
 		<module>xchange-bitkonan</module>
 		<module>xchange-bitmarket</module>
+		<module>xchange-bitso</module>
 		<module>xchange-bitstamp</module>
 		<module>xchange-bittrex</module>
 		<module>xchange-bitvc</module>
@@ -104,11 +104,9 @@
 		<module>xchange-kraken</module>
 		<module>xchange-lakebtc</module>
 		<module>xchange-mercadobitcoin</module>
-		<module>xchange-mintpal</module>
 		<module>xchange-okcoin</module>
 		<module>xchange-openexchangerates</module>
 		<module>xchange-poloniex</module>
-		<module>xchange-vaultofsatoshi</module>
 		<module>xchange-vircurex</module>
 	</modules>
 
@@ -146,7 +144,7 @@
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
-				<version>1.7.8</version>
+				<version>1.7.10</version>
 			</dependency>
 
 			<!-- SLF4J implementation for use in testing -->
@@ -238,11 +236,7 @@
 				<artifactId>commons-io</artifactId>
 				<version>2.4</version>
 			</dependency>
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-lang3</artifactId>
-				<version>3.3.2</version>
-			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
@@ -254,6 +248,14 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- slf4j implementation for testing -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.10</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -292,26 +294,11 @@
 							</execution>
 						</executions>
 					</plugin>
-					<!-- Generates a source code JAR during package -->
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-source-plugin</artifactId>
-						<version>2.4</version>
-						<executions>
-							<execution>
-								<id>attach-sources</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
 
 					<!-- Generates a Javadoc JAR during package -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.10.1</version>
 						<executions>
 							<execution>
 								<id>attach-javadocs</id>
@@ -362,6 +349,16 @@
 	</profiles>
 
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.10.1</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
 		<plugins>
 			<!-- Ensure compilation is done under Java 6 in all environments -->
 			<plugin>
@@ -373,6 +370,48 @@
 					<target>1.6</target>
 					<showDeprecation>true</showDeprecation>
 					<showWarnings>true</showWarnings>
+				</configuration>
+			</plugin>
+
+			<!-- Generates a source code JAR during package -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.4</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.18.1</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.18.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<skipTests>${skipTests}</skipTests>
+					<includes>
+						<include>**/*Integration.java</include>
+					</includes>
 				</configuration>
 			</plugin>
 
@@ -392,6 +431,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<skipTests>true</skipTests>
 	</properties>
 
 </project>

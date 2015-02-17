@@ -1,74 +1,66 @@
 package com.xeiam.xchange.itbit.v1.service.polling;
 
 import java.io.IOException;
-import java.util.Map;
 
+import com.xeiam.xchange.Exchange;
 import com.xeiam.xchange.currency.CurrencyPair;
-import com.xeiam.xchange.dto.marketdata.TradeServiceHelper;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParamCurrencyPair;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParamPaging;
-import com.xeiam.xchange.service.polling.trade.DefaultTradeHistoryParamPaging;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParams;
-import si.mazi.rescu.SynchronizedValueFactory;
-
-import com.xeiam.xchange.ExchangeException;
-import com.xeiam.xchange.ExchangeSpecification;
-import com.xeiam.xchange.NotAvailableFromExchangeException;
-import com.xeiam.xchange.NotYetImplementedForExchangeException;
 import com.xeiam.xchange.dto.trade.LimitOrder;
 import com.xeiam.xchange.dto.trade.MarketOrder;
 import com.xeiam.xchange.dto.trade.OpenOrders;
 import com.xeiam.xchange.dto.trade.UserTrades;
+import com.xeiam.xchange.exceptions.NotYetImplementedForExchangeException;
 import com.xeiam.xchange.itbit.v1.ItBitAdapters;
-import com.xeiam.xchange.service.polling.PollingTradeService;
+import com.xeiam.xchange.service.polling.trade.PollingTradeService;
+import com.xeiam.xchange.service.polling.trade.params.DefaultTradeHistoryParamPaging;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParamCurrencyPair;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParamPaging;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParams;
 
 public class ItBitTradeService extends ItBitTradeServiceRaw implements PollingTradeService {
 
   /**
    * Constructor
    *
-   * @param exchangeSpecification
-   *          The {@link ExchangeSpecification}
+   * @param exchange
    */
-  public ItBitTradeService(ExchangeSpecification exchangeSpecification, SynchronizedValueFactory<Long> nonceFactory) {
+  public ItBitTradeService(Exchange exchange) {
 
-    super(exchangeSpecification, nonceFactory);
+    super(exchange);
   }
 
   @Override
-  public OpenOrders getOpenOrders() throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public OpenOrders getOpenOrders() throws IOException {
 
     return ItBitAdapters.adaptPrivateOrders(getItBitOpenOrders());
   }
 
   @Override
-  public String placeMarketOrder(MarketOrder marketOrder) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public String placeMarketOrder(MarketOrder marketOrder) throws IOException {
 
     throw new NotYetImplementedForExchangeException();
   }
 
   @Override
-  public String placeLimitOrder(LimitOrder limitOrder) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public String placeLimitOrder(LimitOrder limitOrder) throws IOException {
 
     return placeItBitLimitOrder(limitOrder).getId();
   }
 
   @Override
-  public boolean cancelOrder(String orderId) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public boolean cancelOrder(String orderId) throws IOException {
 
     cancelItBitOrder(orderId);
     return true;
   }
 
   @Override
-  public UserTrades getTradeHistory(Object... arguments) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public UserTrades getTradeHistory(Object... arguments) throws IOException {
 
     String currency;
     if (arguments.length == 1) {
       CurrencyPair currencyPair = ((CurrencyPair) arguments[0]);
       currency = currencyPair.baseSymbol + currencyPair.counterSymbol;
-    }
-    else {
+    } else {
       currency = "XBTUSD";
     }
 
@@ -76,12 +68,10 @@ public class ItBitTradeService extends ItBitTradeServiceRaw implements PollingTr
   }
 
   /**
-   * Required parameters:
-   * {@link TradeHistoryParamPaging}
-   * {@link TradeHistoryParamCurrencyPair}
+   * Required parameters: {@link TradeHistoryParamPaging} {@link TradeHistoryParamCurrencyPair}
    */
   @Override
-  public UserTrades getTradeHistory(TradeHistoryParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public UserTrades getTradeHistory(TradeHistoryParams params) throws IOException {
 
     TradeHistoryParamPaging paging = (TradeHistoryParamPaging) params;
     Integer pageLength = paging.getPageLength();
@@ -102,22 +92,12 @@ public class ItBitTradeService extends ItBitTradeServiceRaw implements PollingTr
   }
 
   @Override
-  public com.xeiam.xchange.service.polling.trade.TradeHistoryParams createTradeHistoryParams() {
+  public com.xeiam.xchange.service.polling.trade.params.TradeHistoryParams createTradeHistoryParams() {
 
     return new ItBitTradeHistoryParams();
   }
 
-  /**
-   * Fetch the {@link com.xeiam.xchange.dto.marketdata.TradeServiceHelper} from the exchange.
-   *
-   * @return Map of currency pairs to their corresponding metadata.
-   * @see com.xeiam.xchange.dto.marketdata.TradeServiceHelper
-   */
-  @Override public Map<CurrencyPair, ? extends TradeServiceHelper> getTradeServiceHelperMap() throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-    throw new NotAvailableFromExchangeException();
-  }
-
-  public static class ItBitTradeHistoryParams extends DefaultTradeHistoryParamPaging implements TradeHistoryParamCurrencyPair{
+  public static class ItBitTradeHistoryParams extends DefaultTradeHistoryParamPaging implements TradeHistoryParamCurrencyPair {
 
     private CurrencyPair pair;
 

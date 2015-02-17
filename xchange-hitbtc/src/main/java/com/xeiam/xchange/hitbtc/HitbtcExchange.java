@@ -1,23 +1,28 @@
 package com.xeiam.xchange.hitbtc;
 
-import java.io.IOException;
-import java.util.Map;
+import si.mazi.rescu.SynchronizedValueFactory;
 
 import com.xeiam.xchange.BaseExchange;
 import com.xeiam.xchange.Exchange;
-import com.xeiam.xchange.ExchangeException;
 import com.xeiam.xchange.ExchangeSpecification;
-import com.xeiam.xchange.currency.CurrencyPair;
-import com.xeiam.xchange.hitbtc.dto.marketdata.HitbtcTradeServiceHelper;
 import com.xeiam.xchange.hitbtc.service.polling.HitbtcAccountService;
 import com.xeiam.xchange.hitbtc.service.polling.HitbtcMarketDataService;
 import com.xeiam.xchange.hitbtc.service.polling.HitbtcTradeService;
-import com.xeiam.xchange.utils.nonce.LongTimeNonceFactory;
-import si.mazi.rescu.SynchronizedValueFactory;
+import com.xeiam.xchange.utils.nonce.CurrentTimeNonceFactory;
 
 public class HitbtcExchange extends BaseExchange implements Exchange {
 
-  private final SynchronizedValueFactory<Long> nonceFactory = new LongTimeNonceFactory();
+  private final SynchronizedValueFactory<Long> nonceFactory = new CurrentTimeNonceFactory();
+
+  @Override
+  public void applySpecification(ExchangeSpecification exchangeSpecification) {
+
+    super.applySpecification(exchangeSpecification);
+
+    this.pollingMarketDataService = new HitbtcMarketDataService(this);
+    this.pollingTradeService = new HitbtcTradeService(this);
+    this.pollingAccountService = new HitbtcAccountService(this);
+  }
 
   @Override
   public ExchangeSpecification getDefaultExchangeSpecification() {
@@ -34,21 +39,9 @@ public class HitbtcExchange extends BaseExchange implements Exchange {
   }
 
   @Override
-  public void applySpecification(ExchangeSpecification exchangeSpecification) {
+  public SynchronizedValueFactory<Long> getNonceFactory() {
 
-    super.applySpecification(exchangeSpecification);
-    this.pollingMarketDataService = new HitbtcMarketDataService(exchangeSpecification, nonceFactory);
-    HitbtcTradeService hitbtcTradeService = new HitbtcTradeService(exchangeSpecification, nonceFactory);
-    HitbtcAccountService hitbtcAccountService = new HitbtcAccountService(exchangeSpecification, nonceFactory);
-    this.pollingTradeService = hitbtcTradeService;
-    this.pollingAccountService = hitbtcAccountService;
+    return nonceFactory;
   }
 
-  @Override
-  public void init() throws IOException, ExchangeException {
-    super.init();
-
-    Map<CurrencyPair, HitbtcTradeServiceHelper> map = ((HitbtcTradeService) pollingTradeService).getTradeServiceHelperMap();
-    ((HitbtcAccountService)pollingAccountService).setTradingFeeFromTradeHelpers(map);
-  }
 }

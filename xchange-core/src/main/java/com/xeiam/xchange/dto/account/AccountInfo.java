@@ -21,7 +21,7 @@ public final class AccountInfo {
 
   /**
    * Constructor
-   * 
+   *
    * @param username The user name
    * @param wallets The available wallets
    */
@@ -32,7 +32,7 @@ public final class AccountInfo {
 
   /**
    * Constructor
-   * 
+   *
    * @param username The user name
    * @param tradingFee the trading fee
    * @param wallets The available wallets
@@ -53,16 +53,8 @@ public final class AccountInfo {
   }
 
   /**
-   * @return The available wallets (balance and currency)
-   */
-  public List<Wallet> getWallets() {
-
-    return wallets;
-  }
-
-  /**
    * Returns the current trading fee
-   * 
+   *
    * @return The trading fee
    */
   public BigDecimal getTradingFee() {
@@ -71,8 +63,16 @@ public final class AccountInfo {
   }
 
   /**
+   * @return The available wallets (balance and currency)
+   */
+  public List<Wallet> getWallets() {
+
+    return wallets;
+  }
+
+  /**
    * Utility method to locate an exchange balance in the given currency
-   * 
+   *
    * @param currency A valid currency unit (e.g. CurrencyUnit.USD or CurrencyUnit.of("BTC"))
    * @return The balance, or zero if not found
    */
@@ -90,8 +90,7 @@ public final class AccountInfo {
 
   @Override
   public String toString() {
-
-    return "AccountInfo [username=" + username + ", fee=" + tradingFee + ", wallets=" + wallets + "]";
+    return "AccountInfo [username=" + username + ", tradingFee=" + tradingFee + ", wallets=" + wallets + "]";
   }
 
 }

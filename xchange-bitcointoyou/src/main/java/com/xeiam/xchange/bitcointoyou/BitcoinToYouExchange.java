@@ -1,20 +1,21 @@
 package com.xeiam.xchange.bitcointoyou;
 
+import si.mazi.rescu.SynchronizedValueFactory;
+
 import com.xeiam.xchange.BaseExchange;
 import com.xeiam.xchange.Exchange;
 import com.xeiam.xchange.ExchangeSpecification;
-import com.xeiam.xchange.NotAvailableFromExchangeException;
-import com.xeiam.xchange.bitcointoyou.service.polling.account.BitcoinToYouAccountService;
-import com.xeiam.xchange.bitcointoyou.service.polling.marketdata.BitcoinToYouMarketDataService;
-import com.xeiam.xchange.bitcointoyou.service.polling.trade.BitcoinToYouTradeService;
-import com.xeiam.xchange.service.streaming.ExchangeStreamingConfiguration;
-import com.xeiam.xchange.service.streaming.StreamingExchangeService;
+import com.xeiam.xchange.bitcointoyou.service.polling.BitcoinToYouAccountService;
+import com.xeiam.xchange.bitcointoyou.service.polling.BitcoinToYouMarketDataService;
+import com.xeiam.xchange.bitcointoyou.service.polling.BitcoinToYouTradeService;
+import com.xeiam.xchange.utils.nonce.AtomicLongCurrentTimeIncrementalNonceFactory;
 
 /**
- * @author Matija Mazi
  * @author Felipe Micaroni Lalli
  */
 public class BitcoinToYouExchange extends BaseExchange implements Exchange {
+
+  private SynchronizedValueFactory<Long> nonceFactory = new AtomicLongCurrentTimeIncrementalNonceFactory();
 
   @Override
   public ExchangeSpecification getDefaultExchangeSpecification() {
@@ -33,16 +34,15 @@ public class BitcoinToYouExchange extends BaseExchange implements Exchange {
   public void applySpecification(ExchangeSpecification exchangeSpecification) {
 
     super.applySpecification(exchangeSpecification);
-    this.pollingMarketDataService = new BitcoinToYouMarketDataService(exchangeSpecification);
-    this.pollingAccountService = new BitcoinToYouAccountService(exchangeSpecification);
-    this.pollingTradeService = new BitcoinToYouTradeService(exchangeSpecification);
+    this.pollingMarketDataService = new BitcoinToYouMarketDataService(this);
+    this.pollingAccountService = new BitcoinToYouAccountService(this);
+    this.pollingTradeService = new BitcoinToYouTradeService(this);
   }
 
   @Override
-  public StreamingExchangeService getStreamingExchangeService(ExchangeStreamingConfiguration configuration) {
+  public SynchronizedValueFactory<Long> getNonceFactory() {
 
-    // "BitcoinToYou does not support streaming yet (Dec 2014)."
-    throw new NotAvailableFromExchangeException();
+    return nonceFactory;
   }
 
 }

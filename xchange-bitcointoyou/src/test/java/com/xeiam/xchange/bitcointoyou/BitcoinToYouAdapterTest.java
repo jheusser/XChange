@@ -30,7 +30,7 @@ import com.xeiam.xchange.dto.trade.LimitOrder;
 
 /**
  * Tests the BitcoinToYouAdapter class
- * 
+ *
  * @author Felipe Micaroni Lalli
  */
 public class BitcoinToYouAdapterTest {
@@ -45,8 +45,7 @@ public class BitcoinToYouAdapterTest {
     ObjectMapper mapper = new ObjectMapper();
     BitcoinToYouOrderBook bitcoinToYouOrderBook = mapper.readValue(is, BitcoinToYouOrderBook.class);
 
-    Date now = new Date();
-    OrderBook orderBook = BitcoinToYouAdapters.adaptOrderBook(bitcoinToYouOrderBook, CurrencyPair.BTC_BRL, now.getTime());
+    OrderBook orderBook = BitcoinToYouAdapters.adaptOrderBook(bitcoinToYouOrderBook, CurrencyPair.BTC_BRL);
     assertThat(orderBook.getBids().size()).isEqualTo(2);
 
     // verify all fields filled
@@ -54,7 +53,6 @@ public class BitcoinToYouAdapterTest {
     assertThat(orderBook.getBids().get(0).getType()).isEqualTo(OrderType.BID);
     assertThat(orderBook.getBids().get(0).getTradableAmount()).isEqualTo(new BigDecimal("0.00055518"));
     assertThat(orderBook.getBids().get(0).getCurrencyPair()).isEqualTo(CurrencyPair.BTC_BRL);
-    assertThat(orderBook.getTimeStamp().equals(now));
   }
 
   @Test
@@ -105,12 +103,12 @@ public class BitcoinToYouAdapterTest {
 
     // Use Jackson to parse it
     ObjectMapper mapper = new ObjectMapper();
-    BitcoinToYouBaseTradeApiResult<BitcoinToYouBalance[]> bitcoinToYouAccountInfo = mapper.readValue(is, new TypeReference<BitcoinToYouBaseTradeApiResult<BitcoinToYouBalance[]>>() {
-    });
+    BitcoinToYouBaseTradeApiResult<BitcoinToYouBalance[]> bitcoinToYouAccountInfo = mapper.readValue(is,
+        new TypeReference<BitcoinToYouBaseTradeApiResult<BitcoinToYouBalance[]>>() {
+        });
 
     AccountInfo accountInfo = BitcoinToYouAdapters.adaptAccountInfo(bitcoinToYouAccountInfo, "Nina Tufão & Bit");
     assertThat(accountInfo.getUsername()).isEqualTo("Nina Tufão & Bit");
-    assertThat(accountInfo.getTradingFee()).isNull();
     assertThat(accountInfo.getWallets().get(0).getCurrency()).isEqualTo("BRL");
     assertThat(accountInfo.getWallets().get(0).getBalance()).isEqualTo(new BigDecimal("17628.7309736"));
     assertThat(accountInfo.getWallets().get(1).getCurrency()).isEqualTo("BTC");
@@ -127,8 +125,9 @@ public class BitcoinToYouAdapterTest {
 
     // Use Jackson to parse it
     ObjectMapper mapper = new ObjectMapper();
-    BitcoinToYouBaseTradeApiResult<BitcoinToYouOrder[]> apiResult = mapper.readValue(is, new TypeReference<BitcoinToYouBaseTradeApiResult<BitcoinToYouOrder[]>>() {
-    });
+    BitcoinToYouBaseTradeApiResult<BitcoinToYouOrder[]> apiResult = mapper.readValue(is,
+        new TypeReference<BitcoinToYouBaseTradeApiResult<BitcoinToYouOrder[]>>() {
+        });
 
     List<LimitOrder> orders = BitcoinToYouAdapters.adaptOrders(apiResult);
 

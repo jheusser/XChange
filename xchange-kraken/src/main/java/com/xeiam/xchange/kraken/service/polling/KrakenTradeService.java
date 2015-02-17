@@ -1,38 +1,31 @@
 package com.xeiam.xchange.kraken.service.polling;
 
-import com.xeiam.xchange.ExchangeException;
-import com.xeiam.xchange.ExchangeSpecification;
-import com.xeiam.xchange.NotAvailableFromExchangeException;
-import com.xeiam.xchange.NotYetImplementedForExchangeException;
-import com.xeiam.xchange.currency.CurrencyPair;
-import com.xeiam.xchange.dto.marketdata.BaseTradeServiceHelper;
-import com.xeiam.xchange.dto.marketdata.TradeServiceHelper;
+import java.io.IOException;
+
+import com.xeiam.xchange.Exchange;
 import com.xeiam.xchange.dto.trade.LimitOrder;
 import com.xeiam.xchange.dto.trade.MarketOrder;
 import com.xeiam.xchange.dto.trade.OpenOrders;
 import com.xeiam.xchange.dto.trade.UserTrades;
+import com.xeiam.xchange.exceptions.ExchangeException;
 import com.xeiam.xchange.kraken.KrakenAdapters;
-import com.xeiam.xchange.kraken.dto.marketdata.KrakenAssetPair;
-import com.xeiam.xchange.service.polling.PollingTradeService;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParamOffset;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParams;
-import com.xeiam.xchange.service.polling.trade.TradeHistoryParamsTimeSpan;
-import com.xeiam.xchange.service.polling.trade.DefaultTradeHistoryParamsTimeSpan;
-import si.mazi.rescu.SynchronizedValueFactory;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.xeiam.xchange.utils.TradeServiceHelperConfigurer.CFG;
+import com.xeiam.xchange.service.polling.trade.PollingTradeService;
+import com.xeiam.xchange.service.polling.trade.params.DefaultTradeHistoryParamsTimeSpan;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParamOffset;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParams;
+import com.xeiam.xchange.service.polling.trade.params.TradeHistoryParamsTimeSpan;
+import com.xeiam.xchange.utils.DateUtils;
 
 public class KrakenTradeService extends KrakenTradeServiceRaw implements PollingTradeService {
 
-  public KrakenTradeService(ExchangeSpecification exchangeSpecification, SynchronizedValueFactory<Long> nonceFactory) {
+  /**
+   * Constructor
+   *
+   * @param exchange
+   */
+  public KrakenTradeService(Exchange exchange) {
 
-    super(exchangeSpecification, nonceFactory);
+    super(exchange);
   }
 
   @Override
@@ -66,52 +59,38 @@ public class KrakenTradeService extends KrakenTradeServiceRaw implements Polling
   }
 
   /**
-   * Required parameters
-   * {@link TradeHistoryParamsTimeSpan}
-   * {@link TradeHistoryParamOffset}
+   * @param params Can optionally implement {@link TradeHistoryParamOffset} and
+   *          {@link TradeHistoryParamsTimeSpan}. All other TradeHistoryParams
+   *          types will be ignored.
    */
   @Override
   public UserTrades getTradeHistory(TradeHistoryParams params) throws ExchangeException, IOException {
 
-    TradeHistoryParamsTimeSpan timeSpan = (TradeHistoryParamsTimeSpan) params;
-    TradeHistoryParamOffset offset = (TradeHistoryParamOffset) params;
+    final Long startTime;
+    final Long endTime;
+    if (params instanceof TradeHistoryParamsTimeSpan) {
+      TradeHistoryParamsTimeSpan timeSpan = (TradeHistoryParamsTimeSpan) params;
+      startTime = DateUtils.toUnixTimeNullSafe(timeSpan.getStartTime());
+      endTime = DateUtils.toUnixTimeNullSafe(timeSpan.getEndTime());
+    } else {
+      startTime = null;
+      endTime = null;
+    }
 
-    return KrakenAdapters.adaptTradesHistory(getKrakenTradeHistory(null, false, getTime(timeSpan.getStartTime()), getTime(timeSpan.getEndTime()), offset.getOffset()));
+    final Long offset;
+    if (params instanceof TradeHistoryParamOffset) {
+      offset = ((TradeHistoryParamOffset) params).getOffset();
+    } else {
+      offset = null;
+    }
+
+    return KrakenAdapters.adaptTradesHistory(getKrakenTradeHistory(null, false, startTime, endTime, offset));
   }
 
   @Override
-  public com.xeiam.xchange.service.polling.trade.TradeHistoryParams createTradeHistoryParams() {
+  public com.xeiam.xchange.service.polling.trade.params.TradeHistoryParams createTradeHistoryParams() {
 
     return new KrakenTradeHistoryParams();
-  }
-
-  /**
-   * Fetch the {@link com.xeiam.xchange.dto.marketdata.TradeServiceHelper} from the exchange.
-   *
-   * @return Map of currency pairs to their corresponding metadata.
-   * @see com.xeiam.xchange.dto.marketdata.TradeServiceHelper
-   */
-  @Override public Map<CurrencyPair, ? extends TradeServiceHelper> getTradeServiceHelperMap() throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-    Map<CurrencyPair, BaseTradeServiceHelper> result = new HashMap<CurrencyPair, BaseTradeServiceHelper>();
-
-    Map<String, KrakenAssetPair> assetPairs = getKrakenAssetPairs().getAssetPairMap();
-    for (Map.Entry<String, KrakenAssetPair> e : assetPairs.entrySet()) {
-      String krakenPair = e.getKey();
-      CurrencyPair pair = KrakenAdapters.adaptCurrencyPair(krakenPair);
-
-      KrakenAssetPair assetPair = e.getValue();
-      BigDecimal amountMinimum = CFG.getBigDecimalProperty(KEY_ORDER_SIZE_MIN_DEFAULT).setScale(assetPair.getVolumeLotScale(), BigDecimal.ROUND_UNNECESSARY);
-      BaseTradeServiceHelper tradeServiceHelper = new BaseTradeServiceHelper(amountMinimum, assetPair.getPairScale());
-
-      result.put(pair, tradeServiceHelper);
-    }
-
-    return result;
-  }
-
-  private static Long getTime(Date date) {
-
-    return date == null ? null : date.getTime();
   }
 
   public static class KrakenTradeHistoryParams extends DefaultTradeHistoryParamsTimeSpan implements TradeHistoryParamOffset {

@@ -1,15 +1,12 @@
 package com.xeiam.xchange.btce.v3;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.xeiam.xchange.btce.v3.dto.marketdata.BTCETradeServiceHelper;
-import com.xeiam.xchange.btce.v3.dto.marketdata.BTCEPairInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +45,7 @@ public final class BTCEAdapters {
 
   /**
    * Adapts a List of BTCEOrders to a List of LimitOrders
-   * 
+   *
    * @param bTCEOrders
    * @param currencyPair
    * @param orderTypeString
@@ -69,7 +66,7 @@ public final class BTCEAdapters {
 
   /**
    * Adapts a BTCEOrder to a LimitOrder
-   * 
+   *
    * @param amount
    * @param price
    * @param currencyPair
@@ -84,7 +81,7 @@ public final class BTCEAdapters {
 
   /**
    * Adapts a BTCETradeV3 to a Trade Object
-   * 
+   *
    * @param bTCETrade BTCE trade object v.3
    * @param tradableIdentifier First currency in the pair
    * @param currency Second currency in the pair
@@ -103,7 +100,7 @@ public final class BTCEAdapters {
 
   /**
    * Adapts a BTCETradeV3[] to a Trades Object
-   * 
+   *
    * @param bTCETrades The BTCE trade data returned by API v.3
    * @param tradableIdentifier First currency of the pair
    * @param currency Second currency of the pair
@@ -116,8 +113,9 @@ public final class BTCEAdapters {
     for (BTCETrade bTCETrade : bTCETrades) {
       // Date is reversed order. Insert at index 0 instead of appending
       long tradeId = bTCETrade.getTid();
-      if (tradeId > lastTradeId)
+      if (tradeId > lastTradeId) {
         lastTradeId = tradeId;
+      }
       tradesList.add(0, adaptTrade(bTCETrade, currencyPair));
     }
     return new Trades(tradesList, lastTradeId, TradeSortType.SortByID);
@@ -125,7 +123,7 @@ public final class BTCEAdapters {
 
   /**
    * Adapts a BTCETicker to a Ticker Object
-   * 
+   *
    * @param bTCETicker
    * @return
    */
@@ -136,13 +134,15 @@ public final class BTCEAdapters {
     BigDecimal ask = bTCETicker.getBuy();
     BigDecimal high = bTCETicker.getHigh();
     BigDecimal low = bTCETicker.getLow();
+    BigDecimal avg = bTCETicker.getAvg();
     BigDecimal volume = bTCETicker.getVolCur();
     Date timestamp = DateUtils.fromMillisUtc(bTCETicker.getUpdated() * 1000L);
 
-    return new Ticker.Builder().currencyPair(currencyPair).last(last).bid(bid).ask(ask).high(high).low(low).volume(volume).timestamp(timestamp).build();
+    return new Ticker.Builder().currencyPair(currencyPair).last(last).bid(bid).ask(ask).high(high).low(low).vwap(avg).volume(volume).timestamp(timestamp)
+        .build();
   }
 
-  public static AccountInfo adaptAccountInfo(BTCEAccountInfo btceAccountInfo, BigDecimal tradingFee) {
+  public static AccountInfo adaptAccountInfo(BTCEAccountInfo btceAccountInfo) {
 
     List<Wallet> wallets = new ArrayList<Wallet>();
     Map<String, BigDecimal> funds = btceAccountInfo.getFunds();
@@ -152,7 +152,7 @@ public final class BTCEAdapters {
 
       wallets.add(new Wallet(currency, funds.get(lcCurrency)));
     }
-    return new AccountInfo(null, tradingFee, wallets);
+    return new AccountInfo(null, wallets);
   }
 
   public static OpenOrders adaptOrders(Map<Long, BTCEOrder> btceOrderMap) {
@@ -208,13 +208,4 @@ public final class BTCEAdapters {
     return pairs;
   }
 
-  public static BTCETradeServiceHelper createMarketMetadata(BTCEPairInfo pairInfo, int amountScale) {
-
-    BigDecimal minAmount = pairInfo.getMinAmount().setScale(amountScale, RoundingMode.UNNECESSARY);
-
-    // convert percent to factor
-    BigDecimal orderFeeFactor = pairInfo.getFee().movePointLeft(2);
-
-    return new BTCETradeServiceHelper(minAmount, pairInfo.getDecimals(), pairInfo.getMinPrice(), pairInfo.getMaxPrice());
-  }
 }

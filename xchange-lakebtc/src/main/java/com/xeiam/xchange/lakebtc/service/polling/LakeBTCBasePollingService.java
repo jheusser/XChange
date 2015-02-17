@@ -1,74 +1,64 @@
 package com.xeiam.xchange.lakebtc.service.polling;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import com.xeiam.xchange.ExchangeException;
-import com.xeiam.xchange.ExchangeSpecification;
+import si.mazi.rescu.ParamsDigest;
+import si.mazi.rescu.RestProxyFactory;
+
+import com.xeiam.xchange.Exchange;
 import com.xeiam.xchange.currency.CurrencyPair;
+import com.xeiam.xchange.exceptions.ExchangeException;
 import com.xeiam.xchange.lakebtc.LakeBTC;
+import com.xeiam.xchange.lakebtc.LakeBTCAuthenticated;
 import com.xeiam.xchange.lakebtc.dto.LakeBTCResponse;
+import com.xeiam.xchange.lakebtc.service.LakeBTCDigest;
 import com.xeiam.xchange.service.BaseExchangeService;
 import com.xeiam.xchange.service.polling.BasePollingService;
 import com.xeiam.xchange.utils.Assert;
-import si.mazi.rescu.ParamsDigest;
-import si.mazi.rescu.RestProxyFactory;
-import si.mazi.rescu.SynchronizedValueFactory;
 
 /**
  * @author kpysniak
  */
-public class LakeBTCBasePollingService<T extends LakeBTC> extends BaseExchangeService implements BasePollingService {
+public class LakeBTCBasePollingService extends BaseExchangeService implements BasePollingService {
 
+  protected final LakeBTCAuthenticated lakeBTCAuthenticated;
+  protected final ParamsDigest signatureCreator;
 
-    protected T btcLakeBTC;
-    protected ParamsDigest signatureCreator;
-    protected SynchronizedValueFactory<Long> tonce;
+  protected final LakeBTC lakeBTC;
 
-    /**
-     * Constructor
-     *
-     * @param exchangeSpecification
-     */
-    public LakeBTCBasePollingService(Class<T> type, ExchangeSpecification exchangeSpecification, SynchronizedValueFactory<Long> tonceFactory) {
+  /**
+   * Constructor
+   *
+   * @param exchange
+   */
+  public LakeBTCBasePollingService(Exchange exchange) {
 
-        super(exchangeSpecification);
-        Assert.notNull(exchangeSpecification.getSslUri(), "Exchange specification URI cannot be null");
+    super(exchange);
 
-        this.btcLakeBTC = RestProxyFactory.createProxy(type, exchangeSpecification.getSslUri());
-        this.signatureCreator = LakeBTCDigest.createInstance(exchangeSpecification.getUserName(), exchangeSpecification.getSecretKey());
-        this.tonce = tonceFactory;
+    Assert.notNull(exchange.getExchangeSpecification().getSslUri(), "Exchange specification URI cannot be null");
+
+    this.lakeBTCAuthenticated = RestProxyFactory.createProxy(LakeBTCAuthenticated.class, exchange.getExchangeSpecification().getSslUri());
+    this.signatureCreator = LakeBTCDigest.createInstance(exchange.getExchangeSpecification().getUserName(), exchange.getExchangeSpecification()
+        .getSecretKey());
+
+    this.lakeBTC = RestProxyFactory.createProxy(LakeBTC.class, exchange.getExchangeSpecification().getSslUri());
+
+  }
+
+  @SuppressWarnings("rawtypes")
+  public static <T extends LakeBTCResponse> T checkResult(T returnObject) {
+
+    if (returnObject.getResult() == null) {
+      throw new ExchangeException("Null data returned");
     }
+    return returnObject;
+  }
 
+  @Override
+  public List<CurrencyPair> getExchangeSymbols() throws IOException {
 
-    @SuppressWarnings("rawtypes")
-    public static <T extends LakeBTCResponse> T checkResult(T returnObject) {
-        if (returnObject.getResult() == null) {
-            throw new ExchangeException("Null data returned");
-        }
-        return returnObject;
-    }
+    return exchange.getMetaData().getCurrencyPairs();
+  }
 
-    public static final List<CurrencyPair> CURRENCY_PAIRS = Arrays.asList(
-            CurrencyPair.BTC_USD, CurrencyPair.BTC_CNY
-    );
-
-    /**
-     * Constructor Initialize common properties from the exchange specification
-     *
-     * @param exchangeSpecification The {@link com.xeiam.xchange.ExchangeSpecification}
-     */
-    protected LakeBTCBasePollingService(ExchangeSpecification exchangeSpecification) {
-
-        super(exchangeSpecification);
-    }
-
-    @Override
-    public Collection<CurrencyPair> getExchangeSymbols() throws IOException {
-        return CURRENCY_PAIRS;
-    }
 }
