@@ -174,9 +174,7 @@ public final class GeminiAdapters {
     List<Wallet> wallets = new ArrayList<Wallet>(response.length);
 
     for (GeminiBalancesResponse balance : response) {
-      if ("exchange".equals(balance.getType())) {
         wallets.add(new Wallet(balance.getCurrency().toUpperCase(), balance.getAmount(), balance.getAvailable()));
-      }
     }
 
     return new AccountInfo(null, wallets);
